@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoiceUp: Misi Hortatory Exposition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=Poppins:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0fdf4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            background: white;
+            min-height: 100vh;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        @media (min-width: 481px) {
+            .app-container {
+                min-height: 92vh;
+                border-radius: 28px;
+                margin: 20px;
+                overflow: hidden;
+                border: 8px solid #1f2937;
+            }
+        }
+        h1, h2, h3, .poppins {
+            font-family: 'Poppins', sans-serif;
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .badge-icon {
+            filter: drop-shadow(0 4px 3px rgb(0 0 0 / 0.1));
+            transition: transform 0.2s;
+        }
+        .text-box {
+            background: #f8fafc;
+            border-left: 4px solid #10b981;
+            padding: 16px;
+            border-radius: 0 12px 12px 0;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #334155;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        .option-btn {
+            width: 100%;
+            text-align: left;
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            color: #334155;
+            font-weight: 500;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        .option-btn:hover {
+            border-color: #cbd5e1;
+            background: #f8fafc;
+        }
+        .option-btn.selected {
+            border-color: #10b981;
+            background: #ecfdf5;
+            color: #065f46;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.1);
+        }
+        .cert-bg {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+            background-image: radial-gradient(circle at 100% 100%, rgba(255,255,255,0.1) 0%, transparent 50%), 
+                              radial-gradient(circle at 0% 0%, rgba(255,255,255,0.1) 0%, transparent 50%);
+        }
+        .hide-scroll::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scroll {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 sm:p-4 text-gray-800">
+
+<div class="app-container" id="app">
+    <!-- Screens injected here -->
+</div>
+
+<script>
+    // --- STATE MANAGEMENT ---
+    const state = {
+        studentName: "",
+        studentClass: "",
+        score: 0,
+        currentMissionId: 1,
+        unlockedMissions: 1,
+        badges: [],
+        activeMission: {
+            qIndex: 0,
+            answers: [] // Stores answers for the 3 questions of current mission
+        }
+    };
+
+    const badgesData = [
+        { id: 1, name: "Eco-Novice", icon: "🌱" },
+        { id: 2, name: "Structure Sleuth", icon: "🔍" },
+        { id: 3, name: "Grammar Guru", icon: "✨" },
+        { id: 4, name: "Logic Builder", icon: "⚙️" },
+        { id: 5, name: "VoiceUp Master", icon: "🏆" }
+    ];
+
+    // 5 Missions, each with exactly 3 questions
+    const missionsData = [
+        {
+            id: 1,
+            title: "Mission 1: The Foundation",
+            subtitle: "Definition & Function",
+            text: "<strong>The Plastic Problem in SMK</strong><br><br>Vocational high schools (SMK) produce a significant amount of plastic waste daily, especially in culinary and office administration majors. This environmental issue needs urgent attention. Firstly, excessive plastic usage pollutes our school environment. Secondly, plastic packaging from school canteens often ends up clogging local drains, causing floods during the rainy season. Therefore, school authorities must implement a strict 'Zero Waste' policy. The principal should mandate digital assignments and ban single-use plastics in the canteen to save our environment.",
+            questions: [
+                {
+                    q: "What is the MAIN social function of the text above?",
+                    options: [
+                        { text: "To describe the types of plastic waste in SMK.", isCorrect: false, explanation: "That would be a descriptive text." },
+                        { text: "To persuade readers that the school MUST implement a Zero Waste policy.", isCorrect: true, explanation: "Correct! Hortatory exposition persuades the reader that something should or should not be done." },
+                        { text: "To amuse the readers with a story about a flooded canteen.", isCorrect: false, explanation: "That would be a narrative text." }
+                    ]
+                },
+                {
+                    q: "How does this text differ from an Analytical Exposition text?",
+                    options: [
+                        { text: "It ends with a specific recommendation/action (must implement).", isCorrect: true, explanation: "Exactly! Analytical exposition ends with a reiteration/conclusion, while Hortatory ends with a recommendation." },
+                        { text: "It uses arguments to support the thesis.", isCorrect: false, explanation: "Both analytical and hortatory use arguments." },
+                        { text: "It is written in the past tense.", isCorrect: false, explanation: "Both usually use the simple present tense." }
+                    ]
+                },
+                {
+                    q: "(HOTS) Why does the author specifically mention 'clogging local drains' and 'floods' in the argument?",
+                    options: [
+                        { text: "To explain the chemical process of plastic degradation.", isCorrect: false, explanation: "The text does not discuss chemical processes." },
+                        { text: "To show that plastic is cheap and easy to use.", isCorrect: false, explanation: "This contradicts the author's purpose." },
+                        { text: "To trigger an emotional response (fear of floods) to strengthen the persuasion.", isCorrect: true, explanation: "Brilliant! Authors use relatable negative impacts (emotive elements) to make their arguments more convincing." }
+                    ]
+                }
+            ]
+        },
+        {
+            id: 2,
+            title: "Mission 2: Structure Detective",
+            subtitle: "Generic Structure",
+            text: "<strong>Paragraph 1:</strong> As future IT professionals, SMK TKJ students need to properly manage electronic waste (e-waste) from broken computers to save our earth.<br><br><strong>Paragraph 2:</strong> E-waste contains toxic chemicals like lead and mercury. If thrown in regular trash, these toxins leak into the soil and poison our groundwater.<br><br><strong>Paragraph 3:</strong> Therefore, the school management should provide special e-waste bins in every laboratory and partner with recycling centers.",
+            questions: [
+                {
+                    q: "Which paragraph functions as the 'Thesis' (the main issue)?",
+                    options: [
+                        { text: "Paragraph 1", isCorrect: true, explanation: "Correct! The thesis introduces the topic and the writer's position." },
+                        { text: "Paragraph 2", isCorrect: false, explanation: "This is an argument supporting the thesis." },
+                        { text: "Paragraph 3", isCorrect: false, explanation: "This is the recommendation." }
+                    ]
+                },
+                {
+                    q: "What is the purpose of Paragraph 2 in the text structure?",
+                    options: [
+                        { text: "To give a suggestion (Recommendation).", isCorrect: false, explanation: "It does not suggest an action." },
+                        { text: "To state the main problem (Thesis).", isCorrect: false, explanation: "The problem was stated in Paragraph 1." },
+                        { text: "To provide reasons supporting the thesis (Arguments).", isCorrect: true, explanation: "Good job! It gives factual reasons why e-waste is dangerous." }
+                    ]
+                },
+                {
+                    q: "(HOTS) If you remove Paragraph 3, what happens to the text?",
+                    options: [
+                        { text: "It becomes a Narrative text.", isCorrect: false, explanation: "It still lacks characters and a plot." },
+                        { text: "It becomes an Analytical Exposition text.", isCorrect: true, explanation: "Without a recommendation, an exposition text that only presents arguments is considered Analytical." },
+                        { text: "It becomes a Descriptive text.", isCorrect: false, explanation: "It still has arguments, not just physical descriptions." }
+                    ]
+                }
+            ]
+        },
+        {
+            id: 3,
+            title: "Mission 3: Language Feature Hunt",
+            subtitle: "Grammar & Vocabulary",
+            text: "We <strong>must</strong> switch to solar panels in our mechanical workshops. The current electricity usage from fossil fuels is <strong>extremely devastating</strong> for the atmosphere. <strong>Furthermore</strong>, the smoke from power plants makes the air dangerous to breathe. We <strong>should</strong> act now before it is too late.",
+            questions: [
+                {
+                    q: "Identify the modal auxiliaries used in the text to recommend an action.",
+                    options: [
+                        { text: "is & makes", isCorrect: false, explanation: "These are simple present verbs, not modals." },
+                        { text: "must & should", isCorrect: true, explanation: "Correct! Modals like must, should, ought to are key features of hortatory exposition." },
+                        { text: "for & to", isCorrect: false, explanation: "These are prepositions." }
+                    ]
+                },
+                {
+                    q: "What is the function of the word 'Furthermore' in the text?",
+                    options: [
+                        { text: "As a conjunction to add another argument.", isCorrect: true, explanation: "Great! Conjunctions like furthermore, secondly, in addition are used to link arguments logically." },
+                        { text: "As an emotive word to make people cry.", isCorrect: false, explanation: "It's a logical connector, not an emotive word." },
+                        { text: "To show the opposite idea.", isCorrect: false, explanation: "Words like 'however' show opposite ideas." }
+                    ]
+                },
+                {
+                    q: "(HOTS) The phrase 'extremely devastating' is an evaluative/emotive word. Why did the writer choose this instead of saying 'bad'?",
+                    options: [
+                        { text: "Because it is shorter to write.", isCorrect: false, explanation: "'Bad' is actually shorter." },
+                        { text: "Because it strongly emphasizes the severity of the problem to persuade the reader.", isCorrect: true, explanation: "Excellent! Emotive words manipulate the reader's emotions to make the persuasion stronger." },
+                        { text: "Because it is required in simple present tense.", isCorrect: false, explanation: "Tense and emotive vocabulary are separate concepts." }
+                    ]
+                }
+            ]
+        },
+        {
+            id: 4,
+            title: "Mission 4: The Persuasive Builder",
+            subtitle: "Logic & Evidence",
+            text: "<strong>Context:</strong> You are writing a Hortatory Exposition arguing that students should bring their own tumblers to school instead of buying bottled water.",
+            questions: [
+                {
+                    q: "Which of the following is the most logical ARGUMENT to support this thesis?",
+                    options: [
+                        { text: "Bottled water is usually sold cold in the canteen.", isCorrect: false, explanation: "This does not support why we shouldn't buy it." },
+                        { text: "Tumblers come in many beautiful colors.", isCorrect: false, explanation: "This is a weak, irrelevant argument for an environmental text." },
+                        { text: "Bringing a tumbler reduces daily plastic waste and saves students' money.", isCorrect: true, explanation: "Perfect! It provides logical, dual benefits (environment and economic)." }
+                    ]
+                },
+                {
+                    q: "(HOTS) Which factual evidence would make your argument the strongest?",
+                    options: [
+                        { text: "A survey showing that 80% of school trash is plastic water bottles.", isCorrect: true, explanation: "Data and statistics make arguments highly credible and persuasive." },
+                        { text: "A quote from a student saying they like cold water.", isCorrect: false, explanation: "This doesn't support the environmental argument." },
+                        { text: "A picture of a tumbler.", isCorrect: false, explanation: "Visuals are nice, but data is stronger evidence." }
+                    ]
+                },
+                {
+                    q: "Choose the correct complex sentence to link two ideas: (1) Tumblers are reusable. (2) Plastic bottles are thrown away after one use.",
+                    options: [
+                        { text: "Tumblers are reusable, plastic bottles are thrown away.", isCorrect: false, explanation: "This is a comma splice (grammatically incorrect)." },
+                        { text: "While tumblers are reusable, plastic bottles are thrown away after one use.", isCorrect: true, explanation: "Correct! 'While' is a subordinating conjunction that creates a strong complex sentence contrasting the two." },
+                        { text: "Tumblers are reusable and plastic bottles.", isCorrect: false, explanation: "Incomplete sentence." }
+                    ]
+                }
+            ]
+        },
+        {
+            id: 5,
+            title: "Mission 5: VoiceUp Challenge",
+            subtitle: "Writing & Sequencing",
+            text: "<strong>Topic:</strong> Implementing a mandatory 'Green Skills' project for SMK students.",
+            questions: [
+                {
+                    q: "Which sentence makes the best THESIS for this topic?",
+                    options: [
+                        { text: "Vocational students must learn 'Green Skills' to adapt to eco-friendly industry standards.", isCorrect: true, explanation: "Strong thesis! It states the position clearly and gives a broad reason." },
+                        { text: "Green Skills are skills about planting trees.", isCorrect: false, explanation: "This is just a definition, not a persuasive position." },
+                        { text: "Therefore, students should plant trees.", isCorrect: false, explanation: "This is a recommendation, not a thesis." }
+                    ]
+                },
+                {
+                    q: "Arrange these into a correct structure (Thesis - Argument - Recommendation):<br>1. Secondly, industries now look for workers who understand sustainability.<br>2. Therefore, the curriculum must include Green Skills as a core subject.<br>3. Green Skills are vital for SMK students today.",
+                    options: [
+                        { text: "2 - 1 - 3", isCorrect: false, explanation: "Starts with recommendation." },
+                        { text: "3 - 1 - 2", isCorrect: true, explanation: "Perfect! 3 is Thesis, 1 is Argument, 2 is Recommendation." },
+                        { text: "1 - 3 - 2", isCorrect: false, explanation: "Starts with an argument." }
+                    ]
+                },
+                {
+                    q: "(HOTS) Read this weak recommendation: 'So, it is good to learn green skills.'<br>Choose the most persuasive and formal revision for a Hortatory text:",
+                    options: [
+                        { text: "In conclusion, the government strongly should consider that green skills are okay.", isCorrect: false, explanation: "Still too informal and weak ('okay')." },
+                        { text: "Based on the arguments above, the Ministry of Education must officially integrate Green Skills into the SMK curriculum immediately.", isCorrect: true, explanation: "Excellent! It uses strong modals (must), names the responsible party, and demands clear action." },
+                        { text: "Green skills are nice for students.", isCorrect: false, explanation: "Too weak, lacks a call to action." }
+                    ]
+                }
+            ]
+        }
+    ];
+
+    // --- AUDIO SYSTEM ---
+    function playAmazing() {
+        if ('speechSynthesis' in window) {
+            // Cancel any ongoing speech
+            window.speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance("Amazing!");
+            utterance.lang = "en-US";
+            utterance.rate = 1.1; 
+            utterance.pitch = 1.3; // slightly enthusiastic
+            utterance.volume = 1.0;
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+
+    // --- DOM ELEMENTS & RENDERER ---
+    const app = document.getElementById('app');
+
+    function renderScreen(html) {
+        app.innerHTML = `<div class="fade-in flex flex-col h-full">${html}</div>`;
+    }
+
+    // --- COMPONENT SCREENS ---
+
+    // 1. Start Screen
+    function showStartScreen() {
+        const html = `
+            <div class="flex-1 flex flex-col items-center justify-center p-6 text-center overflow-y-auto">
+                <div class="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center text-5xl mb-4 shadow-inner relative">
+                    👩‍🏫
+                    <span class="absolute bottom-0 right-0 text-2xl">🌱</span>
+                </div>
+                <h1 class="text-3xl font-bold text-emerald-700 mb-1 poppins">VoiceUp!</h1>
+                <p class="text-gray-500 mb-6 font-medium">Hortatory Exposition Game</p>
+                
+                <div class="bg-blue-50 border border-blue-100 rounded-2xl p-5 mb-8 text-left relative shadow-sm w-full">
+                    <div class="absolute -top-3 left-4 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow">Lexi</div>
+                    <p class="text-sm text-blue-900 leading-relaxed">Hello! I'm Lexi. Ready to learn how to write persuasive texts and save our environment? Complete all 5 missions to earn your official certificate. Enter your details to start!</p>
+                </div>
+
+                <div class="w-full space-y-4">
+                    <div>
+                        <input type="text" id="studentName" placeholder="Your Full Name" class="w-full px-4 py-3.5 rounded-xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all text-gray-700 font-medium">
+                    </div>
+                    <div>
+                        <input type="text" id="studentClass" placeholder="Class (e.g., XI TKJ 1)" class="w-full px-4 py-3.5 rounded-xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all text-gray-700 font-medium">
+                    </div>
+                    <button onclick="startGame()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl shadow-lg transition-transform transform active:scale-95 text-lg mt-2 flex items-center justify-center">
+                        Start Mission <span class="ml-2">🚀</span>
+                    </button>
+                </div>
+            </div>
+        `;
+        renderScreen(html);
+    }
+
+    // 2. Map / Dashboard Screen
+    function showDashboard() {
+        let missionsHtml = '';
+        missionsData.forEach((mission) => {
+            const isUnlocked = state.unlockedMissions >= mission.id;
+            const isCompleted = state.currentMissionId > mission.id;
+            
+            let statusClasses = isUnlocked 
+                ? 'bg-white border-emerald-500 shadow-sm' 
+                : 'bg-gray-50 border-gray-200 opacity-60';
+            
+            let icon = isCompleted ? '✅' : (isUnlocked ? '🔓' : '🔒');
+            let titleColor = isUnlocked ? 'text-gray-800' : 'text-gray-400';
+            let subtitleColor = isUnlocked ? 'text-gray-500' : 'text-gray-400';
+            let cursor = isUnlocked && !isCompleted ? 'cursor-pointer hover:shadow-md transform hover:-translate-y-1' : (isCompleted ? 'cursor-default' : 'cursor-not-allowed');
+            
+            // Allow clicking only the current active mission
+            let clickAction = (isUnlocked && !isCompleted) ? `onclick="initMission(${mission.id})"` : '';
+
+            missionsHtml += `
+                <div ${clickAction} class="flex items-center p-4 mb-4 border-2 rounded-2xl transition-all duration-200 ${statusClasses} ${cursor}">
+                    <div class="text-2xl mr-4 bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center">${icon}</div>
+                    <div class="flex-1">
+                        <h3 class="font-bold poppins text-sm md:text-base ${titleColor}">${mission.title}</h3>
+                        <p class="text-xs ${subtitleColor} mt-0.5">${mission.subtitle}</p>
+                    </div>
+                    ${isUnlocked && !isCompleted ? `<div class="text-emerald-500 font-bold text-xl">▶</div>` : ''}
+                </div>
+            `;
+        });
+
+        const html = `
+            <div class="bg-emerald-600 text-white p-6 rounded-b-3xl shadow-md relative overflow-hidden">
+                <div class="absolute top-0 right-0 opacity-10 text-9xl transform translate-x-1/4 -translate-y-1/4">🌱</div>
+                <div class="flex justify-between items-end mb-5 relative z-10">
+                    <div>
+                        <p class="text-emerald-100 text-xs uppercase tracking-wider font-bold mb-1">Agent</p>
+                        <h2 class="text-xl font-bold truncate max-w-[180px] poppins">${state.studentName}</h2>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-emerald-100 text-xs uppercase tracking-wider font-bold mb-1">Score</p>
+                        <h2 class="text-3xl font-black text-yellow-300 poppins">${state.score}</h2>
+                    </div>
+                </div>
+                
+                <div class="bg-black bg-opacity-20 rounded-xl p-3 flex space-x-3 overflow-x-auto hide-scroll relative z-10 min-h-[60px] items-center">
+                    ${state.badges.map(b => `<div class="text-2xl badge-icon relative group" title="${b.name}">
+                        ${b.icon}
+                        <span class="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity pointer-events-none">${b.name}</span>
+                    </div>`).join('')}
+                    ${state.badges.length === 0 ? '<span class="text-sm text-emerald-100 font-medium">Earn badges by completing missions!</span>' : ''}
+                </div>
+            </div>
+            
+            <div class="flex-1 p-5 overflow-y-auto pb-24 bg-gray-50">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-bold text-gray-800 poppins">Mission Map</h2>
+                    <span class="text-xs font-bold bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full">${state.currentMissionId <= 5 ? state.currentMissionId : 5}/5</span>
+                </div>
+                ${missionsHtml}
+            </div>
+
+            ${state.unlockedMissions > 5 ? `
+            <div class="absolute bottom-0 left-0 right-0 p-5 bg-white border-t border-gray-100 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)]">
+                <button onclick="showCertificate()" class="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white font-bold py-4 rounded-xl shadow-lg transition-transform transform active:scale-95 animate-bounce flex justify-center items-center text-lg">
+                    <span>View Official Certificate</span> <span class="ml-2 text-2xl">🏆</span>
+                </button>
+            </div>
+            ` : ''}
+        `;
+        renderScreen(html);
+    }
+
+    // 3. Mission Wizard Logic
+    function initMission(id) {
+        state.activeMission = {
+            id: id,
+            qIndex: 0,
+            answers: [] // [selectedIndex1, selectedIndex2, selectedIndex3]
+        };
+        renderQuestionScreen();
+    }
+
+    function renderQuestionScreen() {
+        const mission = missionsData.find(m => m.id === state.activeMission.id);
+        const qIndex = state.activeMission.qIndex;
+        const currentQ = mission.questions[qIndex];
+        const selectedOpt = state.activeMission.answers[qIndex]; // may be undefined
+
+        let optionsHtml = '';
+        currentQ.options.forEach((opt, index) => {
+            const isSelected = selectedOpt === index ? 'selected' : '';
+            optionsHtml += `
+                <button onclick="selectOption(${index})" class="option-btn text-sm md:text-base ${isSelected}" id="opt-${index}">
+                    <div class="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center mr-3 flex-shrink-0">
+                        ${isSelected ? '<div class="w-3 h-3 bg-current rounded-full"></div>' : ''}
+                    </div>
+                    <span>${opt.text}</span>
+                </button>
+            `;
+        });
+
+        const isLastQuestion = qIndex === 2;
+        const btnText = isLastQuestion ? 'Submit Mission' : 'Next Question';
+        const btnAction = isLastQuestion ? 'submitMission()' : 'nextQuestion()';
+        
+        // Disable button initially if no option selected
+        const btnDisabled = selectedOpt === undefined ? 'opacity-50 cursor-not-allowed' : 'hover:bg-emerald-700';
+
+        const html = `
+            <div class="bg-white p-4 shadow-sm flex items-center justify-between border-b border-gray-100 z-10 relative">
+                <button onclick="showDashboard()" class="text-gray-400 hover:text-gray-700 p-1">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <div class="font-bold text-gray-800 poppins truncate mx-2">${mission.title}</div>
+                <div class="text-xs font-bold bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full whitespace-nowrap">${qIndex + 1} / 3</div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto bg-gray-50 flex flex-col">
+                <!-- Text Area (Only shown visually connected) -->
+                <div class="p-5 pb-2 bg-white">
+                    <div class="flex items-start mb-4">
+                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-xl mr-3 flex-shrink-0">👩‍🏫</div>
+                        <div class="bg-blue-50 p-3 rounded-2xl rounded-tl-none border border-blue-100 text-sm text-blue-900 shadow-sm">
+                            Read carefully and answer the challenge! (Question ${qIndex + 1} of 3)
+                        </div>
+                    </div>
+                    <div class="text-box shadow-sm mb-2 text-sm border border-gray-100">
+                        ${mission.text}
+                    </div>
+                </div>
+
+                <!-- Question Area -->
+                <div class="p-5 flex-1 bg-gray-50 flex flex-col">
+                    <h3 class="font-bold text-gray-800 mb-5 text-lg leading-snug">${currentQ.q}</h3>
+                    
+                    <div class="space-y-3 flex-1">
+                        ${optionsHtml}
+                    </div>
+
+                    <div class="pt-6 mt-auto">
+                        <button id="action-btn" onclick="${selectedOpt !== undefined ? btnAction : ''}" class="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-md transition-all transform active:scale-95 text-lg ${btnDisabled}">
+                            ${btnText}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Re-render, avoiding flash if possible, but full render is clean
+        app.innerHTML = `<div class="flex flex-col h-full animate-[fadeIn_0.2s_ease-out]">${html}</div>`;
+    }
+
+    // Make selectOption available globally
+    window.selectOption = function(index) {
+        state.activeMission.answers[state.activeMission.qIndex] = index;
+        renderQuestionScreen(); // Re-render to update UI state
+    };
+
+    window.nextQuestion = function() {
+        if (state.activeMission.answers[state.activeMission.qIndex] !== undefined) {
+            state.activeMission.qIndex++;
+            renderQuestionScreen();
+        }
+    };
+
+    window.submitMission = function() {
+        if (state.activeMission.answers[state.activeMission.qIndex] === undefined) return;
+        
+        const mission = missionsData.find(m => m.id === state.activeMission.id);
+        let correctCount = 0;
+        let summaryHtml = '';
+        let pointsEarned = 0;
+
+        mission.questions.forEach((q, i) => {
+            const userAnsIndex = state.activeMission.answers[i];
+            const isCorrect = q.options[userAnsIndex].isCorrect;
+            
+            if (isCorrect) {
+                correctCount++;
+                pointsEarned += 10;
+            }
+
+            const icon = isCorrect ? '✅' : '❌';
+            const bgColor = isCorrect ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200';
+            
+            summaryHtml += `
+                <div class="${bgColor} border rounded-xl p-4 mb-4">
+                    <p class="font-semibold text-sm mb-2 text-gray-800">Q${i+1}: ${q.q}</p>
+                    <div class="flex items-start text-sm mb-2">
+                        <span class="mr-2">${icon}</span>
+                        <span class="${isCorrect ? 'text-emerald-700' : 'text-red-700'} font-medium">Your answer: ${q.options[userAnsIndex].text}</span>
+                    </div>
+                    <div class="text-xs text-gray-600 bg-white bg-opacity-60 p-2 rounded-lg italic">
+                        <strong>Reason:</strong> ${q.options[userAnsIndex].explanation}
+                    </div>
+                </div>
+            `;
+        });
+
+        // Determine Pass/Fail (Require at least 2/3 to pass)
+        const isPassed = correctCount >= 2;
+        
+        if (isPassed) {
+            playAmazing(); // Trigger Voice API!
+        }
+
+        renderFeedbackScreen(mission, correctCount, pointsEarned, summaryHtml, isPassed);
+    };
+
+    function renderFeedbackScreen(mission, correctCount, pointsEarned, summaryHtml, isPassed) {
+        const titleColor = isPassed ? 'text-emerald-600' : 'text-red-500';
+        const title = isPassed ? 'Mission Accomplished!' : 'Mission Failed!';
+        const subtitle = isPassed ? `Great job! You got ${correctCount}/3 correct.` : `You only got ${correctCount}/3 correct. You need at least 2 correct to pass.`;
+        const buttonText = isPassed ? 'Collect Rewards & Continue' : 'Retry Mission';
+        
+        let rewardHtml = '';
+        if (isPassed && state.currentMissionId === mission.id) {
+            const badge = badgesData[mission.id - 1];
+            rewardHtml = `
+                <div class="flex flex-col items-center justify-center my-6 p-5 bg-gradient-to-b from-white to-emerald-50 rounded-2xl border border-emerald-100 shadow-sm relative overflow-hidden">
+                    <div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(circle at center, #10b981 1px, transparent 1px); background-size: 10px 10px;"></div>
+                    <span class="text-5xl animate-bounce mb-2 filter drop-shadow-md z-10">${badge.icon}</span>
+                    <span class="font-bold text-gray-800 z-10 poppins text-center">Badge Unlocked:<br><span class="text-emerald-600">${badge.name}</span></span>
+                    <span class="text-sm font-bold bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full mt-3 z-10">+${pointsEarned} Points</span>
+                </div>
+            `;
+        } else if (isPassed) {
+             rewardHtml = `
+                <div class="text-center my-4 font-bold text-emerald-600">
+                    Mission previously completed. +${pointsEarned} Points!
+                </div>
+             `;
+        }
+
+        const html = `
+            <div class="bg-white p-4 shadow-sm flex items-center justify-center border-b border-gray-100">
+                <div class="font-bold text-gray-800 poppins">Mission Report</div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-5 pb-24 bg-gray-50">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-bold ${titleColor} poppins mb-2">${title}</h2>
+                    <p class="text-gray-600 text-sm">${subtitle}</p>
+                </div>
+                
+                ${rewardHtml}
+
+                <h3 class="font-bold text-gray-800 mb-3 poppins text-sm uppercase tracking-wide border-b pb-2">Performance Summary</h3>
+                <div class="space-y-2">
+                    ${summaryHtml}
+                </div>
+            </div>
+
+            <div class="absolute bottom-0 left-0 right-0 p-5 bg-white border-t border-gray-100 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)]">
+                <button onclick="handleFeedbackAction(${isPassed}, ${mission.id}, ${pointsEarned})" class="w-full ${isPassed ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-500 hover:bg-red-600'} text-white font-bold py-4 rounded-xl shadow-lg transition-transform transform active:scale-95 text-lg">
+                    ${buttonText}
+                </button>
+            </div>
+        `;
+        renderScreen(html);
+    }
+
+    window.handleFeedbackAction = function(isPassed, missionId, pointsEarned) {
+        if (isPassed) {
+            // Only add rewards if this is the current uncompleted mission
+            if (state.currentMissionId === missionId) {
+                state.score += pointsEarned; // Could be 20 or 30 depending on correct count
+                state.badges.push(badgesData[missionId - 1]);
+                state.currentMissionId++;
+                state.unlockedMissions++;
+            } else {
+                 // Replaying a mission, just add points for fun, but cap it?
+                 // Let's not add points for replays to keep score max at 150.
+            }
+            showDashboard();
+        } else {
+            // Retry
+            initMission(missionId);
+        }
+    }
+
+    // 4. Certificate Screen
+    window.showCertificate = function() {
+        const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+        // Max possible score is 5 missions * 3 Qs * 10 pts = 150
+        
+        const html = `
+            <div class="flex-1 flex flex-col bg-gray-100 relative">
+                <div class="bg-white p-4 shadow-sm flex items-center border-b border-gray-200 z-20">
+                    <button onclick="showDashboard()" class="text-gray-500 hover:text-gray-800 p-2 bg-gray-50 rounded-full transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                    <div class="flex-1 text-center font-bold text-gray-800 poppins">Graduation</div>
+                    <div class="w-10"></div>
+                </div>
+
+                <div class="flex-1 overflow-y-auto p-5 flex flex-col justify-center items-center">
+                    <div class="cert-bg w-full rounded-3xl p-8 shadow-2xl relative overflow-hidden border-8 border-yellow-400 max-w-[400px]">
+                        
+                        <!-- Watermark / Design elements -->
+                        <div class="absolute top-4 left-4 w-12 h-12 border-t-2 border-l-2 border-yellow-200 opacity-50"></div>
+                        <div class="absolute bottom-4 right-4 w-12 h-12 border-b-2 border-r-2 border-yellow-200 opacity-50"></div>
+                        
+                        <div class="relative z-10 text-center flex flex-col items-center">
+                            <div class="text-6xl mb-4 filter drop-shadow-lg">🎓</div>
+                            
+                            <h1 class="text-2xl md:text-3xl font-bold poppins mb-2 tracking-wide uppercase text-yellow-300 drop-shadow-md">Certificate</h1>
+                            <p class="text-[10px] md:text-xs text-emerald-100 mb-6 uppercase tracking-widest font-bold">Of Completion</p>
+                            
+                            <p class="text-sm text-emerald-50 mb-1">This official document certifies that</p>
+                            <h2 class="text-3xl font-black mb-2 font-serif text-white tracking-wide border-b-2 border-yellow-400 pb-2 inline-block px-4">${state.studentName}</h2>
+                            <p class="text-md text-emerald-100 mb-6 font-medium">Class: ${state.studentClass}</p>
+                            
+                            <p class="text-xs text-emerald-50 mb-6 max-w-[280px] mx-auto leading-relaxed">
+                                Has successfully completed VoiceUp Training, mastering the Structure, Language Features, and Social Function of Hortatory Exposition Texts.
+                            </p>
+                            
+                            <div class="bg-black bg-opacity-20 p-3 rounded-2xl backdrop-blur-sm mb-8 w-full border border-emerald-500 border-opacity-30">
+                                <p class="text-[10px] text-emerald-200 mb-2 uppercase tracking-wider font-bold">Badges Earned</p>
+                                <div class="flex justify-center space-x-2 flex-wrap gap-y-2">
+                                    ${state.badges.map(b => `<span class="text-2xl filter drop-shadow-md" title="${b.name}">${b.icon}</span>`).join('')}
+                                </div>
+                            </div>
+
+                            <div class="flex justify-between items-end w-full px-2">
+                                <div class="text-left">
+                                    <div class="text-3xl font-black text-yellow-300 poppins">${state.score}</div>
+                                    <div class="text-[10px] text-emerald-100 uppercase tracking-wider">Total Score</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-sm font-bold text-white border-b border-emerald-200 pb-1 font-serif italic">SMK English Dept.</div>
+                                    <div class="text-[10px] text-emerald-200 mt-1">${date}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 text-center text-gray-500 text-sm flex items-center justify-center space-x-2 bg-white px-4 py-2 rounded-full shadow-sm">
+                        <span>📸</span>
+                        <span>Take a screenshot for your teacher</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        renderScreen(html);
+    }
+
+    // --- UTILS ---
+    window.startGame = function() {
+        const nameInput = document.getElementById('studentName').value.trim();
+        const classInput = document.getElementById('studentClass').value.trim();
+
+        if (!nameInput || !classInput) {
+            showCustomToast("Please enter both your Name and Class to begin.");
+            return;
+        }
+
+        state.studentName = nameInput;
+        state.studentClass = classInput;
+        showDashboard();
+    }
+
+    function showCustomToast(message) {
+        // Remove existing if any
+        const existing = document.getElementById('custom-toast');
+        if (existing) existing.remove();
+
+        const div = document.createElement('div');
+        div.id = 'custom-toast';
+        div.className = 'absolute top-6 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-6 py-3 rounded-full shadow-lg z-50 animate-[fadeIn_0.3s_ease-out] font-medium text-sm whitespace-nowrap';
+        div.innerHTML = message;
+        app.appendChild(div);
+        
+        setTimeout(() => {
+            div.style.opacity = '0';
+            div.style.transition = 'opacity 0.3s ease-out';
+            setTimeout(() => div.remove(), 300);
+        }, 3000);
+    }
+
+    // Initialize
+    window.onload = () => {
+        showStartScreen();
+    };
+
+</script>
+</body>
+</html>
